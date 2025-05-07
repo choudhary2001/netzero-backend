@@ -5,7 +5,7 @@ dotenv.config();
 
 //auth
 export const verifyToken = async (req, res, next) => {
-    console.log("Inside verifyToken");
+
     console.log("Printing token:", req.cookies?.["net-jwt-token"]);
     try {
         //extract token
@@ -20,7 +20,7 @@ export const verifyToken = async (req, res, next) => {
                 message: 'TOken is missing',
             });
         }
-        console.log("Token:", token);
+
         //verify the token
         try {
             const decode = jwt.verify(token, process.env.JWT_SECRET);
@@ -103,3 +103,5 @@ export const isAdmin = async (req, res, next) => {
         })
     }
 }
+
+

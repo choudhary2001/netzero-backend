@@ -20,6 +20,18 @@ import {
     updateEsgScores,
     updateFormSubmission
 } from './Controllers/supplier.js';
+import {
+    createOrUpdateESGData,
+    getESGData,
+    submitESGData,
+    reviewESGData,
+    getAllESGData,
+    uploadCertificate,
+    updateSectionPoints,
+    testEsgApi,
+    getCompanyInfo,
+    updateCompanyInfo
+} from './Controllers/esgController.js';
 
 import express from 'express';
 const router = express.Router();
@@ -58,5 +70,19 @@ router.patch('/suppliers/:id/form-submission', verifyToken, updateFormSubmission
 
 // Role fetching
 router.get("/auth/fetch-role", verifyToken, fetchRole);
+
+// ESG Routes
+router.get('/esg/test', testEsgApi); // Test endpoint without auth
+router.post('/esg/update', verifyToken, createOrUpdateESGData);
+router.get('/esg/data', verifyToken, getESGData);
+router.post('/esg/submit', verifyToken, submitESGData);
+router.post('/esg/review/:esgDataId', verifyToken, reviewESGData);
+router.get('/esg/all', verifyToken, getAllESGData);
+router.post('/esg/upload-certificate', verifyToken, uploadCertificate);
+router.post('/esg/update-points', verifyToken, updateSectionPoints);
+
+// Company Info Routes
+router.get('/company-info', verifyToken, getCompanyInfo);
+router.post('/company-info', verifyToken, updateCompanyInfo);
 
 export default router;
