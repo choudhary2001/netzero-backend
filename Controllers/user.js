@@ -335,7 +335,7 @@ export const updateProfile = async (req, res) => {
         supplierProfile = new SupplierProfile({
           userId: user._id,
           companyName: updateData.companyName,
-          contactPerson: updateData.contactPerson || updateData.name || user.name || '',
+          contactPerson: updateData.contactPerson || updateData.name || user.name || 'Contact Person',
         });
       }
 
@@ -348,7 +348,12 @@ export const updateProfile = async (req, res) => {
 
         supplierFields.forEach(field => {
           if (updateData[field] !== undefined) {
-            supplierProfile[field] = updateData[field];
+            // Ensure contactPerson is never empty
+            if (field === 'contactPerson' && !updateData[field]) {
+              supplierProfile[field] = user.name || 'Contact Person';
+            } else {
+              supplierProfile[field] = updateData[field];
+            }
           }
         });
 
@@ -461,6 +466,59 @@ export const resetPassword = async (req, res) => {
   } catch (err) {
     console.error("Password reset error:", err);
     res.status(500).json({ message: "Internal server error" });
+  }
+};
+
+// Change password (for authenticated users)
+export const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { current_password, new_password } = req.body;
+
+    // Validate request
+    if (!current_password || !new_password) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password and new password are required"
+      });
+    }
+
+    // Find user
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(current_password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Current password is incorrect"
+      });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(new_password, salt);
+
+    // Update password
+    user.password = hashedPassword;
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Password updated successfully"
+    });
+  } catch (err) {
+    console.error("Change password error:", err);
+    res.status(500).json({
+      success: false,
+      message: "Server error while changing password"
+    });
   }
 };
 

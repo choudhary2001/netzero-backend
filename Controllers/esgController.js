@@ -483,4 +483,329 @@ export const updateCompanyInfo = async (req, res) => {
             error: error.message
         });
     }
+};
+
+// Helper function to calculate company info completion percentage
+const calculateCompanyCompletion = (companyInfo) => {
+    if (!companyInfo) return 0;
+
+    const fields = [
+        'companyName',
+        'registrationNumber',
+        'establishmentYear',
+        'companyAddress',
+        'businessType',
+        'registrationCertificate'
+    ];
+
+    const completedFields = fields.filter(field =>
+        companyInfo[field] && companyInfo[field] !== ''
+    ).length;
+
+    // Calculate completion percentage
+    return Math.round((completedFields / fields.length) * 100);
+};
+
+// Helper function to calculate environmental completion percentage
+const calculateEnvironmentalCompletion = (environment) => {
+    if (!environment) return 0;
+
+    const sections = [
+        'renewableEnergy',
+        'waterConsumption',
+        'rainwaterHarvesting',
+        'emissionControl',
+        'resourceConservation'
+    ];
+
+    let completedSections = 0;
+    let totalFields = 0;
+
+    sections.forEach(section => {
+        if (environment[section]) {
+            totalFields += 2; // value and certificate fields
+            if (environment[section].value && environment[section].value !== '') {
+                completedSections += 1;
+            }
+            if (environment[section].certificate && environment[section].certificate !== '') {
+                completedSections += 1;
+            }
+        }
+    });
+
+    return totalFields > 0 ? Math.round((completedSections / totalFields) * 100) : 0;
+};
+
+// Helper function to calculate social completion percentage
+const calculateSocialCompletion = (social) => {
+    if (!social) return 0;
+
+    const sections = [
+        'swachhWorkplace',
+        'occupationalSafety',
+        'hrManagement',
+        'csrResponsibility'
+    ];
+
+    let completedSections = 0;
+    let totalFields = 0;
+
+    sections.forEach(section => {
+        if (social[section]) {
+            totalFields += 2; // value and certificate fields
+            if (social[section].value && social[section].value !== '') {
+                completedSections += 1;
+            }
+            if (social[section].certificate && social[section].certificate !== '') {
+                completedSections += 1;
+            }
+        }
+    });
+
+    return totalFields > 0 ? Math.round((completedSections / totalFields) * 100) : 0;
+};
+
+// Helper function to calculate governance completion percentage
+const calculateGovernanceCompletion = (governance) => {
+    if (!governance) return 0;
+
+    const sections = [
+        'deliveryPerformance',
+        'qualityManagement',
+        'processControl',
+        'materialManagement',
+        'maintenanceCalibration',
+        'technologyUpgradation'
+    ];
+
+    let completedSections = 0;
+    let totalFields = 0;
+
+    sections.forEach(section => {
+        if (governance[section]) {
+            totalFields += 2; // value and certificate fields
+            if (governance[section].value && governance[section].value !== '') {
+                completedSections += 1;
+            }
+            if (governance[section].certificate && governance[section].certificate !== '') {
+                completedSections += 1;
+            }
+        }
+    });
+
+    return totalFields > 0 ? Math.round((completedSections / totalFields) * 100) : 0;
+};
+
+// Helper function to get recent updates
+const getRecentUpdates = (esgData) => {
+    const updates = [];
+    const now = new Date();
+
+    // Check for company info updates
+    if (esgData.companyInfo && esgData.companyInfo.lastUpdated) {
+        updates.push({
+            id: 'company-1',
+            title: 'Company information updated',
+            date: formatTimeAgo(esgData.companyInfo.lastUpdated, now),
+            status: 'Completed',
+            type: 'company'
+        });
+    }
+
+    // Check for environmental updates
+    if (esgData.environment) {
+        Object.entries(esgData.environment).forEach(([key, value]) => {
+            if (value && value.lastUpdated) {
+                updates.push({
+                    id: `env-${key}`,
+                    title: `Environmental ${key.replace(/([A-Z])/g, ' $1').toLowerCase()} updated`,
+                    date: formatTimeAgo(value.lastUpdated, now),
+                    status: value.points > 0 ? 'Reviewed' : 'Completed',
+                    type: 'environment'
+                });
+            }
+        });
+    }
+
+    // Check for social updates
+    if (esgData.social) {
+        Object.entries(esgData.social).forEach(([key, value]) => {
+            if (value && value.lastUpdated) {
+                updates.push({
+                    id: `social-${key}`,
+                    title: `Social ${key.replace(/([A-Z])/g, ' $1').toLowerCase()} updated`,
+                    date: formatTimeAgo(value.lastUpdated, now),
+                    status: value.points > 0 ? 'Reviewed' : 'Completed',
+                    type: 'social'
+                });
+            }
+        });
+    }
+
+    // Check for governance updates
+    if (esgData.governance) {
+        Object.entries(esgData.governance).forEach(([key, value]) => {
+            if (value && value.lastUpdated) {
+                updates.push({
+                    id: `gov-${key}`,
+                    title: `Governance ${key.replace(/([A-Z])/g, ' $1').toLowerCase()} updated`,
+                    date: formatTimeAgo(value.lastUpdated, now),
+                    status: value.points > 0 ? 'Reviewed' : 'Completed',
+                    type: 'governance'
+                });
+            }
+        });
+    }
+
+    // Add overall status update
+    if (esgData.status !== 'draft') {
+        updates.push({
+            id: 'status-1',
+            title: `ESG data ${esgData.status}`,
+            date: formatTimeAgo(esgData.lastUpdated, now),
+            status: capitalizeFirstLetter(esgData.status),
+            type: 'status'
+        });
+    }
+
+    // Sort by date (most recent first) and limit to 5 updates
+    return updates
+        .sort((a, b) => {
+            const dateA = parseDateFromTimeAgo(a.date);
+            const dateB = parseDateFromTimeAgo(b.date);
+            return dateB - dateA;
+        })
+        .slice(0, 5);
+};
+
+// Helper function to format time ago
+const formatTimeAgo = (date, now) => {
+    const diffMs = now - new Date(date);
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) {
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+        if (diffHours === 0) {
+            const diffMinutes = Math.floor(diffMs / (1000 * 60));
+            return `${diffMinutes} minute${diffMinutes !== 1 ? 's' : ''} ago`;
+        }
+        return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    } else if (diffDays < 7) {
+        return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    } else if (diffDays < 30) {
+        const diffWeeks = Math.floor(diffDays / 7);
+        return `${diffWeeks} week${diffWeeks !== 1 ? 's' : ''} ago`;
+    } else {
+        const diffMonths = Math.floor(diffDays / 30);
+        return `${diffMonths} month${diffMonths !== 1 ? 's' : ''} ago`;
+    }
+};
+
+// Helper function to parse a time ago string into a relative date
+const parseDateFromTimeAgo = (timeAgoStr) => {
+    const now = new Date();
+    const regex = /(\d+)\s+(minute|hour|day|week|month)s?\s+ago/;
+    const match = timeAgoStr.match(regex);
+
+    if (!match) return now;
+
+    const [, amount, unit] = match;
+    const value = parseInt(amount, 10);
+
+    switch (unit) {
+        case 'minute':
+            return new Date(now - value * 60 * 1000);
+        case 'hour':
+            return new Date(now - value * 60 * 60 * 1000);
+        case 'day':
+            return new Date(now - value * 24 * 60 * 60 * 1000);
+        case 'week':
+            return new Date(now - value * 7 * 24 * 60 * 60 * 1000);
+        case 'month':
+            return new Date(now - value * 30 * 24 * 60 * 60 * 1000);
+        default:
+            return now;
+    }
+};
+
+// Helper function to capitalize the first letter
+const capitalizeFirstLetter = (string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+};
+
+// Get dashboard data for a user
+export const getDashboardData = async (req, res) => {
+    try {
+        // Check if valid user data exists in the request
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({
+                success: false,
+                message: 'Authentication required. Please login.',
+            });
+        }
+
+        // Extract user ID from the JWT payload
+        const userId = req.user.id;
+        const companyId = req.user.companyId || userId;
+
+        console.log('Fetching dashboard data for user:', userId);
+
+        const esgData = await ESGData.findOne({ userId, companyId });
+
+        if (!esgData) {
+            return res.status(200).json({
+                success: true,
+                message: 'No ESG data found for this user',
+                data: {
+                    esgScores: {
+                        environmental: 0,
+                        social: 0,
+                        governance: 0,
+                        overall: 0
+                    },
+                    formCompletion: {
+                        company: 0,
+                        environmental: 0,
+                        social: 0,
+                        governance: 0
+                    },
+                    recentUpdates: [],
+                    status: 'Not Started'
+                }
+            });
+        }
+
+        // Calculate form completion percentages
+        const formCompletion = {
+            company: calculateCompanyCompletion(esgData.companyInfo),
+            environmental: calculateEnvironmentalCompletion(esgData.environment),
+            social: calculateSocialCompletion(esgData.social),
+            governance: calculateGovernanceCompletion(esgData.governance)
+        };
+
+        // Get recent updates based on lastUpdated timestamps
+        const recentUpdates = getRecentUpdates(esgData);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                esgScores: {
+                    environmental: Math.round(esgData.overallScore?.environment) || 0,
+                    social: Math.round(esgData.overallScore?.social) || 0,
+                    governance: Math.round(esgData.overallScore?.governance) || 0,
+                    overall: Math.round(esgData.overallScore?.total) || 0
+                },
+                formCompletion,
+                recentUpdates,
+                status: esgData.status || 'draft'
+            }
+        });
+    } catch (error) {
+        console.error('Error in getDashboardData:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching dashboard data',
+            error: error.message
+        });
+    }
 }; 

@@ -34,6 +34,9 @@ const esgDataSchema = new mongoose.Schema({
                 validity: { type: String }
             }
         ],
+        value: String,
+        points: { type: Number, default: 0 },
+        remarks: String,
         lastUpdated: { type: Date, default: Date.now }
     },
 
