@@ -312,7 +312,7 @@ export const getAllESGData = async (req, res) => {
 // Update points for a specific section
 export const updateSectionPoints = async (req, res) => {
     try {
-        const { esgDataId, category, section, points } = req.body;
+        const { esgDataId, category, section, points, remarks } = req.body;
 
         const esgData = await ESGData.findById(esgDataId);
 
@@ -333,6 +333,7 @@ export const updateSectionPoints = async (req, res) => {
 
         // Update the points
         esgData[category][section].points = points;
+        esgData[category][section].remarks = remarks;
         esgData[category][section].lastUpdated = new Date();
 
         await esgData.save();
@@ -484,6 +485,75 @@ export const updateCompanyInfo = async (req, res) => {
         });
     }
 };
+
+// Update company info
+export const updateCompanyInfoRating = async (req, res) => {
+    try {
+        // Check if valid user data exists in the request
+        if (!req.user || !req.user.id) {
+            return res.status(401).json({
+                success: false,
+                message: 'Authentication required. Please login.',
+            });
+        }
+
+        // Extract user ID from the JWT payload
+        const userId = req.user.id;
+        // const companyId = req.user.companyId || userId;
+        console.log('req.body', req.body);
+        const { esgDataId, rating, remarks } = req.body;
+
+        // Required fields validation
+        if (!rating || !remarks) {
+            return res.status(400).json({
+                success: false,
+                message: 'Missing required field: rating or remarks'
+            });
+        }
+
+        console.log('Updating company info rating with:', { userId, esgDataId });
+
+        // Find existing ESG data
+        let esgData = await ESGData.findById(esgDataId);
+        console.log('ESG data:', esgData);
+        if (!esgData) {
+            // Create new ESG data if it doesn't exist
+            console.log('Creating new ESG data record with company info rating');
+            return res.status(404).json({
+                success: false,
+                message: 'ESG data not found'
+            });
+        } else {
+            // Update existing ESG data
+            console.log('Updating existing company info');
+            esgData.companyInfo.points = rating;
+            esgData.companyInfo.remarks = remarks;
+            esgData.companyInfo.lastUpdated = new Date();
+
+        }
+
+        await esgData.save();
+        console.log('Company info rating saved successfully');
+
+        console.log('Company info rating:', esgData.companyInfo);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                companyInfo: esgData.companyInfo
+            },
+            message: 'Company information updated successfully'
+        });
+    } catch (error) {
+        console.error('Error in updateCompanyInfo:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error updating company information',
+            error: error.message
+        });
+    }
+};
+
 
 // Helper function to calculate company info completion percentage
 const calculateCompanyCompletion = (companyInfo) => {
@@ -790,10 +860,10 @@ export const getDashboardData = async (req, res) => {
             success: true,
             data: {
                 esgScores: {
-                    environmental: Math.round(esgData.overallScore?.environment) || 0,
-                    social: Math.round(esgData.overallScore?.social) || 0,
-                    governance: Math.round(esgData.overallScore?.governance) || 0,
-                    overall: Math.round(esgData.overallScore?.total) || 0
+                    environmental: Number((esgData.overallScore?.environment || 0).toFixed(2)),
+                    social: Number((esgData.overallScore?.social || 0).toFixed(2)),
+                    governance: Number((esgData.overallScore?.governance || 0).toFixed(2)),
+                    overall: Number((esgData.overallScore?.total || 0).toFixed(2))
                 },
                 formCompletion,
                 recentUpdates,

@@ -97,21 +97,21 @@ const getSubmissionTrend = async () => {
 
 // Get category distribution
 const getCategoryDistribution = async () => {
-    // Count documents in each category that have been submitted or reviewed
+    // Define "complete" as having non-null values in a key field from each section
     const environment = await ESGData.countDocuments({
-        'environmentData.isComplete': true
+        'environment.renewableEnergy.value': { $ne: null }
     });
 
     const social = await ESGData.countDocuments({
-        'socialData.isComplete': true
+        'social.swachhWorkplace.value': { $ne: null }
     });
 
     const governance = await ESGData.countDocuments({
-        'governanceData.isComplete': true
+        'governance.deliveryPerformance.value': { $ne: null }
     });
 
     const companyInfo = await ESGData.countDocuments({
-        'companyInfoData.isComplete': true
+        'companyInfo.companyName': { $ne: null }
     });
 
     return [

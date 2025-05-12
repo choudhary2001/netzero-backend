@@ -33,7 +33,8 @@ import {
     testEsgApi,
     getCompanyInfo,
     updateCompanyInfo,
-    getDashboardData
+    getDashboardData,
+    updateCompanyInfoRating
 } from './Controllers/esgController.js';
 
 // Import admin controller
@@ -63,7 +64,7 @@ const router = express.Router();
 
 // User routes
 router.get('/users', async (req, res) => {
-    const users = await User.find({ role: req.query.role });
+    const users = await User.find({ role: req.query.role }).select('-password');
     res.json(users);
 });
 
@@ -112,6 +113,7 @@ router.post('/esg/update-points', verifyToken, updateSectionPoints);
 // Company Info Routes
 router.get('/company-info', verifyToken, getCompanyInfo);
 router.post('/company-info', verifyToken, updateCompanyInfo);
+router.post('/company-info/rating', verifyToken, updateCompanyInfoRating);
 
 // Dashboard Route
 router.get('/dashboard', verifyToken, getDashboardData);

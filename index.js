@@ -7,9 +7,13 @@ import cookieParser from "cookie-parser";
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+import { createServer } from 'http';
+import { initializeSocket } from './socket.js';
+
 dotenv.config({ path: "./.env" });
 
 const app = express();
+const httpServer = createServer(app);
 
 // Get the directory name
 const __filename = fileURLToPath(import.meta.url);
@@ -46,12 +50,21 @@ app.get("/", (req, res) => {
   res.send("Hello World");
 });
 
+// Initialize socket.io
+initializeSocket(httpServer);
+
 app.use("/api", routes);
 
 connectDB();
 
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({ message: 'Something went wrong!' });
+});
+
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
 

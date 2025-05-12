@@ -6,7 +6,7 @@ dotenv.config();
 //auth
 export const verifyToken = async (req, res, next) => {
 
-    console.log("Printing token:", req.cookies?.["net-jwt-token"]);
+    // console.log("Printing token:", req.cookies?.["net-jwt-token"]);
     try {
         //extract token
         const token = req.cookies?.["net-jwt-token"] //we have get the cookie from backend and we have to send it to frontend
@@ -24,7 +24,7 @@ export const verifyToken = async (req, res, next) => {
         //verify the token
         try {
             const decode = jwt.verify(token, process.env.JWT_SECRET);
-            console.log(decode);
+            // console.log(decode);
             req.user = decode;
         }
         catch (err) {
