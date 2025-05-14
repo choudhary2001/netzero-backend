@@ -53,7 +53,7 @@ const chatSchema = new mongoose.Schema({
         },
         sender: {
             type: String,
-            enum: ['admin', 'supplier']
+            enum: ['admin', 'supplier', 'company']
         }
     }
 }, {

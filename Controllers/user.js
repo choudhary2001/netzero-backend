@@ -97,6 +97,7 @@ export const register = async (req, res) => {
   const { email, password, role } = req.body;
   try {
     // Check if user already exists
+    await OTP.deleteOne({ email });
     let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ msg: 'User already exists' });
@@ -147,7 +148,7 @@ export const register = async (req, res) => {
 
     // Save user to database
     //await user.save();
-    res.status(201).json({ msg: 'User registered successfully' });
+    res.status(200).json({ msg: 'OTP sent successfully' });
   } catch (err) {
     console.error(err.message);
     res.status(500).send('Server error');
@@ -156,10 +157,11 @@ export const register = async (req, res) => {
 
 export const verifyOTP = async (req, res) => {
   console.log("The verify otp function is called ");
-  const { number, data } = req.body;
-
+  console.log(req.body, "this is the body");
+  const { otp, data } = req.body;
+  console.log(data, "this is the data", otp, "this is the otp");
   try {
-    const existingOTP = await OTP.findOne({ otp: number });
+    const existingOTP = await OTP.findOne({ otp: otp });
     if (!existingOTP) return res.status(404).json({ message: "Invalid OTP" });
     const isOTPExpired = existingOTP.expiresAt < Date.now();
     if (isOTPExpired) return res.status(400).json({ message: "OTP expired" });
@@ -169,13 +171,12 @@ export const verifyOTP = async (req, res) => {
     const user = new User({
       email: data.email,
       password: pass,
-      role: data.role
+      role: data.role,
+      name: data.name
     });
-
-    // Save user to database
+    await OTP.deleteOne({ email: data.email });
     await user.save();
-    res.status(201).json({ msg: 'User registered successfully' });
-    //res.status(200).json({message:"OTP verified successfully"});
+    res.status(200).json({ msg: 'User registered successfully' });
   }
   catch (err) {
     console.log("the error we have :", err);

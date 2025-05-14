@@ -11,14 +11,14 @@ export const getConversations = async (req, res) => {
         let query = {};
         if (userRole === 'admin') {
             query = { 'participants.admin': userId };
-        } else if (userRole === 'supplier') {
+        } else if (userRole === 'supplier' || userRole === 'company') {
             query = { 'participants.supplier': userId };
         } else {
             return res.status(403).json({ message: 'Unauthorized role for chat access' });
         }
 
         const conversations = await Chat.find(query)
-            .populate('participants.supplier', 'name email company')
+            .populate('participants.supplier', 'name email company role')
             .populate('participants.admin', 'name email')
             .sort({ updatedAt: -1 });
 
@@ -40,7 +40,7 @@ export const getConversation = async (req, res) => {
         }
 
         const conversation = await Chat.findById(conversationId)
-            .populate('participants.supplier', 'name email company')
+            .populate('participants.supplier', 'name email company role')
             .populate('participants.admin', 'name email');
 
         if (!conversation) {
@@ -81,12 +81,12 @@ export const createConversation = async (req, res) => {
 
         // Set participants based on roles
         let participants = {};
-        if (userRole === 'admin' && receiver.role === 'supplier') {
+        if (userRole === 'admin' && (receiver.role === 'supplier' || receiver.role === 'company')) {
             participants = {
                 admin: userId,
                 supplier: receiverId
             };
-        } else if (userRole === 'supplier' && receiver.role === 'admin') {
+        } else if ((userRole === 'supplier' || userRole === 'company') && receiver.role === 'admin') {
             participants = {
                 supplier: userId,
                 admin: receiverId
@@ -122,7 +122,7 @@ export const createConversation = async (req, res) => {
         });
 
         const populatedConversation = await Chat.findById(newConversation._id)
-            .populate('participants.supplier', 'name email company')
+            .populate('participants.supplier', 'name email company role')
             .populate('participants.admin', 'name email');
 
         return res.status(201).json({
@@ -205,11 +205,14 @@ export const sendMessage = async (req, res) => {
             timestamp: new Date(),
             read: false
         };
+        let senderRole = '';
 
         // Update unread count for the recipient
         if (userRole === 'admin') {
+            senderRole = 'admin';
             conversation.unreadCount.supplier += 1;
         } else {
+            senderRole = 'supplier';
             conversation.unreadCount.admin += 1;
         }
 
@@ -217,7 +220,7 @@ export const sendMessage = async (req, res) => {
         conversation.lastMessage = {
             content,
             timestamp: new Date(),
-            sender: userRole
+            sender: senderRole
         };
 
         // Add message to conversation
@@ -270,7 +273,7 @@ export const markMessagesAsRead = async (req, res) => {
                     message.read = true;
                 }
             });
-        } else if (userRole === 'supplier') {
+        } else if (userRole === 'supplier' || userRole === 'company') {
             conversation.unreadCount.supplier = 0;
             // Mark messages from admin as read
             conversation.messages.forEach(message => {
@@ -301,7 +304,7 @@ export const getUnreadCount = async (req, res) => {
         let query = {};
         if (userRole === 'admin') {
             query = { 'participants.admin': userId, 'unreadCount.admin': { $gt: 0 } };
-        } else if (userRole === 'supplier') {
+        } else if (userRole === 'supplier' || userRole === 'company') {
             query = { 'participants.supplier': userId, 'unreadCount.supplier': { $gt: 0 } };
         } else {
             return res.status(403).json({ message: 'Unauthorized role for chat access' });
@@ -311,7 +314,7 @@ export const getUnreadCount = async (req, res) => {
 
         let totalUnread = 0;
         conversations.forEach(conversation => {
-            if (userRole === 'admin') {
+            if (userRole === 'admin' || userRole === 'company') {
                 totalUnread += conversation.unreadCount.admin;
             } else {
                 totalUnread += conversation.unreadCount.supplier;
