@@ -21,7 +21,9 @@ const __dirname = path.dirname(__filename);
 
 const allowedOrigins = [
   "http://localhost:3000",  // Frontend URL from .env
-  "http://localhost:5173"   // Alternative frontend URL
+  "http://localhost:5173",   // Alternative frontend URL
+  "https://netzero-backend-ne4a.onrender.com", // Deployed frontend
+  "https://netzero-frontend.onrender.com"
 ];
 
 app.use(
