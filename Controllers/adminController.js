@@ -1,6 +1,6 @@
 import User from '../Models/user.js';
 import ESGData from '../Models/ESGData.js';
-import SupplierProfile from '../Models/SupplierProfile.js';
+import SupplierProfile from '../Models/supplierProfile.js';
 import Chat from '../Models/Chat.js';
 import mongoose from 'mongoose';
 
