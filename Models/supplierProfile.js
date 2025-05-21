@@ -44,6 +44,12 @@ const supplierProfileSchema = new mongoose.Schema({
             min: 0,
             max: 100
         },
+        quality: {
+            type: Number,
+            default: 0,
+            min: 0,
+            max: 100
+        },
         governance: {
             type: Number,
             default: 0,
@@ -67,6 +73,13 @@ const supplierProfileSchema = new mongoose.Schema({
             lastUpdated: Date
         },
         social: {
+            submitted: {
+                type: Boolean,
+                default: false
+            },
+            lastUpdated: Date
+        },
+        quality: {
             submitted: {
                 type: Boolean,
                 default: false

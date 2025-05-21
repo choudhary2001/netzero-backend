@@ -43,36 +43,47 @@ const esgDataSchema = new mongoose.Schema({
     // Environment Data
     environment: {
         renewableEnergy: {
-            value: String,
-            certificate: String,
+            value: String,  // kWh/month or percentage
+            certificate: String,  // renewable-energy certificates
             points: { type: Number, default: 0 },
             remarks: String,
             lastUpdated: { type: Date, default: Date.now }
         },
         waterConsumption: {
-            value: String,
-            certificate: String,
+            baseline: String,  // Baseline water consumption
+            targets: String,   // Water reduction targets
+            progress: String,  // Progress towards targets
+            certificate: String,  // water-use policy or monitoring data
             points: { type: Number, default: 0 },
             remarks: String,
             lastUpdated: { type: Date, default: Date.now }
         },
         rainwaterHarvesting: {
-            value: String,
-            certificate: String,
+            volume: String,  // Annual volume in kL/yr
+            rechargeCapacity: String,  // Recharge capacity
+            infrastructure: String,  // Infrastructure details
+            maintenance: String,  // Maintenance process
+            certificate: String,  // rainwater-harvesting design docs, monitoring reports
             points: { type: Number, default: 0 },
             remarks: String,
             lastUpdated: { type: Date, default: Date.now }
         },
         emissionControl: {
-            value: String,
-            certificate: String,
+            chemicalManagement: String,  // Chemical management and disposal methods
+            chemicalList: [String],  // List of chemicals
+            disposalMethods: [String],  // Disposal methods
+            eiaReports: String,  // Environmental Impact Assessment reports
+            lcaReports: String,  // Life Cycle Assessment reports
+            certificate: String,  // chemical inventories, EIA/LCA reports
             points: { type: Number, default: 0 },
             remarks: String,
             lastUpdated: { type: Date, default: Date.now }
         },
         resourceConservation: {
-            value: String,
-            certificate: String,
+            wasteDiversion: String,  // Percentage of waste diverted
+            packagingMeasures: String,  // Packaging impact measures
+            certifications: [String],  // Environmental certifications
+            certificate: String,  // waste-management report, packaging policy, certification documents
             points: { type: Number, default: 0 },
             remarks: String,
             lastUpdated: { type: Date, default: Date.now }
@@ -81,36 +92,89 @@ const esgDataSchema = new mongoose.Schema({
     // Social Data
     social: {
         swachhWorkplace: {
-            value: String,
-            certificate: String,
+            sopDetails: String,  // Cleaning and hygiene SOP details
+            workplaceMaintenance: String,  // Workplace maintenance guidelines
+            certificate: String,  // cleaning SOP documents, audit reports, training records
             points: { type: Number, default: 0 },
             remarks: String,
             lastUpdated: { type: Date, default: Date.now }
         },
         occupationalSafety: {
-            value: String,
-            certificate: String,
+            ltifr: String,  // Latest Lost-Time Injury Frequency Rate
+            safetyTraining: {
+                programs: [String],  // Safety training programs
+                coverage: String,  // Employee coverage percentage
+            },
+            emergencyResponse: {
+                plan: String,  // Emergency response plan
+                drillFrequency: String,  // Drill frequency
+            },
+            riskAssessment: String,  // H&S risk assessment methods
+            healthServices: {
+                facilities: String,  // On-site health facilities
+                checkupFrequency: String,  // Health check-up frequency
+            },
+            insurance: String,  // Work-related injury insurance
+            certificate: String,  // safety training schedules, LTIFR report, emergency-drill records
             points: { type: Number, default: 0 },
             remarks: String,
             lastUpdated: { type: Date, default: Date.now }
         },
         hrManagement: {
-            value: String,
-            certificate: String,
+            humanRightsPolicy: String,  // Human rights policy details
+            supplierCode: String,  // Supplier code of conduct
+            wagesBenefits: {
+                fairWages: String,  // Fair wages implementation
+                benefits: String,  // Benefits details
+                wageAudits: String,  // Wage audit information
+            },
+            diversity: {
+                leadershipPercentage: String,  // Women/underrepresented groups in leadership
+                boardPercentage: String,  // Women/underrepresented groups on board
+            },
+            grievanceMechanism: {
+                details: String,  // Grievance mechanism details
+                casesRaised: Number,  // Number of cases raised
+                resolutionOutcomes: String,  // Resolution outcomes
+            },
+            trainingDevelopment: {
+                hoursPerEmployee: String,  // Training hours per employee
+                keyPrograms: [String],  // Key training programs
+            },
+            certificate: String,  // policy documents, wage-audit summary, diversity dashboard, grievance log, training metrics
             points: { type: Number, default: 0 },
             remarks: String,
             lastUpdated: { type: Date, default: Date.now }
         },
-        csrResponsibility: {
-            value: String,
-            certificate: String,
+        csrSocialResponsibilities: {
+            communityInvestment: {
+                initiatives: [String],  // Community investment initiatives
+                localHiring: String,  // Local hiring initiatives
+            },
+            csrProjects: [{
+                name: String,  // Project name
+                description: String,  // Project description
+                impact: String,  // Impact summary
+                year: Number,  // Project year
+            }],
+            employeeOutreach: {
+                programs: [String],  // Employee outreach programs
+                participation: String,  // Participation details
+                spend: String,  // Program spend
+            },
+            socialOutcomes: {
+                measurement: String,  // How outcomes are measured
+                reporting: String,  // How outcomes are reported
+                feedback: String,  // Community feedback
+            },
+            certificate: String,  // project reports, impact assessments, media coverage
             points: { type: Number, default: 0 },
             remarks: String,
             lastUpdated: { type: Date, default: Date.now }
         }
     },
-    // Governance Data
-    governance: {
+    // Quality Data
+    quality: {
         deliveryPerformance: {
             value: String,
             certificate: String,
@@ -154,10 +218,49 @@ const esgDataSchema = new mongoose.Schema({
             lastUpdated: { type: Date, default: Date.now }
         }
     },
+    // Governance Data
+    governance: {
+        governanceStructure: {
+            value: String,
+            certificate: String,
+            points: { type: Number, default: 0 },
+            remarks: String,
+            lastUpdated: { type: Date, default: Date.now }
+        },
+        policiesCompliance: {
+            value: String,
+            certificate: String,
+            points: { type: Number, default: 0 },
+            remarks: String,
+            lastUpdated: { type: Date, default: Date.now }
+        },
+        reportingTargets: {
+            value: String,
+            certificate: String,
+            points: { type: Number, default: 0 },
+            remarks: String,
+            lastUpdated: { type: Date, default: Date.now }
+        },
+        supplierDueDiligence: {
+            value: String,
+            certificate: String,
+            points: { type: Number, default: 0 },
+            remarks: String,
+            lastUpdated: { type: Date, default: Date.now }
+        },
+        incidentsRemediation: {
+            value: String,
+            certificate: String,
+            points: { type: Number, default: 0 },
+            remarks: String,
+            lastUpdated: { type: Date, default: Date.now }
+        }
+    },
     // Overall ESG Score
     overallScore: {
         environment: { type: Number, default: 0 },
         social: { type: Number, default: 0 },
+        quality: { type: Number, default: 0 },
         governance: { type: Number, default: 0 },
         total: { type: Number, default: 0 }
     },
@@ -182,12 +285,21 @@ esgDataSchema.pre('save', function (next) {
     const socialScores = Object.values(this.social).map(item => item.points || 0);
     this.overallScore.social = socialScores.reduce((a, b) => a + b, 0) / socialScores.length;
 
-    // Calculate Governance Score
-    const govScores = Object.values(this.governance).map(item => item.points || 0);
-    this.overallScore.governance = govScores.reduce((a, b) => a + b, 0) / govScores.length;
+    // Calculate Quality Score
+    const qualityScores = Object.values(this.quality).map(item => item.points || 0);
+    this.overallScore.quality = qualityScores.reduce((a, b) => a + b, 0) / qualityScores.length;
 
-    // Calculate Total Score
-    this.overallScore.total = (this.overallScore.environment + this.overallScore.social + this.overallScore.governance) / 3;
+    // Calculate Governance Score
+    const governanceScores = Object.values(this.governance).map(item => item.points || 0);
+    this.overallScore.governance = governanceScores.reduce((a, b) => a + b, 0) / governanceScores.length;
+
+    // Calculate Total Score (now including governance)
+    this.overallScore.total = (
+        this.overallScore.environment +
+        this.overallScore.social +
+        this.overallScore.quality +
+        this.overallScore.governance
+    ) / 4;
 
     next();
 });

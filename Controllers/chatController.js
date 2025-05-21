@@ -1,5 +1,5 @@
-import Chat from '../Models/Chat.js';
 import User from '../Models/user.js';
+import Chat from '../Models/Chat.js';
 import mongoose from 'mongoose';
 
 // Get conversations for current user (admin or supplier)

@@ -2,6 +2,7 @@ import ESGData from '../Models/ESGData.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import SupplierProfile from '../Models/SupplierProfile.js';
 
 // Storage configuration for multer
 const storage = multer.diskStorage({
@@ -588,22 +589,57 @@ const calculateEnvironmentalCompletion = (environment) => {
         'resourceConservation'
     ];
 
-    let completedSections = 0;
+    let completedFields = 0;
     let totalFields = 0;
 
     sections.forEach(section => {
         if (environment[section]) {
-            totalFields += 2; // value and certificate fields
-            if (environment[section].value && environment[section].value !== '') {
-                completedSections += 1;
-            }
-            if (environment[section].certificate && environment[section].certificate !== '') {
-                completedSections += 1;
+            switch (section) {
+                case 'renewableEnergy':
+                    totalFields += 2; // value and certificate
+                    if (environment[section].value && environment[section].value !== '') completedFields++;
+                    if (environment[section].certificate && environment[section].certificate !== '') completedFields++;
+                    break;
+
+                case 'waterConsumption':
+                    totalFields += 4; // baseline, targets, progress, certificate
+                    if (environment[section].baseline && environment[section].baseline !== '') completedFields++;
+                    if (environment[section].targets && environment[section].targets !== '') completedFields++;
+                    if (environment[section].progress && environment[section].progress !== '') completedFields++;
+                    if (environment[section].certificate && environment[section].certificate !== '') completedFields++;
+                    break;
+
+                case 'rainwaterHarvesting':
+                    totalFields += 5; // volume, rechargeCapacity, infrastructure, maintenance, certificate
+                    if (environment[section].volume && environment[section].volume !== '') completedFields++;
+                    if (environment[section].rechargeCapacity && environment[section].rechargeCapacity !== '') completedFields++;
+                    if (environment[section].infrastructure && environment[section].infrastructure !== '') completedFields++;
+                    if (environment[section].maintenance && environment[section].maintenance !== '') completedFields++;
+                    if (environment[section].certificate && environment[section].certificate !== '') completedFields++;
+                    break;
+
+                case 'emissionControl':
+                    totalFields += 6; // chemicalManagement, chemicalList, disposalMethods, eiaReports, lcaReports, certificate
+                    if (environment[section].chemicalManagement && environment[section].chemicalManagement !== '') completedFields++;
+                    if (Array.isArray(environment[section].chemicalList) && environment[section].chemicalList.length > 0) completedFields++;
+                    if (Array.isArray(environment[section].disposalMethods) && environment[section].disposalMethods.length > 0) completedFields++;
+                    if (environment[section].eiaReports && environment[section].eiaReports !== '') completedFields++;
+                    if (environment[section].lcaReports && environment[section].lcaReports !== '') completedFields++;
+                    if (environment[section].certificate && environment[section].certificate !== '') completedFields++;
+                    break;
+
+                case 'resourceConservation':
+                    totalFields += 4; // wasteDiversion, packagingMeasures, certifications, certificate
+                    if (environment[section].wasteDiversion && environment[section].wasteDiversion !== '') completedFields++;
+                    if (environment[section].packagingMeasures && environment[section].packagingMeasures !== '') completedFields++;
+                    if (Array.isArray(environment[section].certifications) && environment[section].certifications.length > 0) completedFields++;
+                    if (environment[section].certificate && environment[section].certificate !== '') completedFields++;
+                    break;
             }
         }
     });
 
-    return totalFields > 0 ? Math.round((completedSections / totalFields) * 100) : 0;
+    return totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0;
 };
 
 // Helper function to calculate social completion percentage
@@ -614,19 +650,96 @@ const calculateSocialCompletion = (social) => {
         'swachhWorkplace',
         'occupationalSafety',
         'hrManagement',
-        'csrResponsibility'
+        'csrSocialResponsibilities'
+    ];
+
+    let completedFields = 0;
+    let totalFields = 0;
+
+    sections.forEach(section => {
+        if (social[section]) {
+            switch (section) {
+                case 'swachhWorkplace':
+                    totalFields += 3; // sopDetails, workplaceMaintenance, certificate
+                    if (social[section].sopDetails && social[section].sopDetails !== '') completedFields++;
+                    if (social[section].workplaceMaintenance && social[section].workplaceMaintenance !== '') completedFields++;
+                    if (social[section].certificate && social[section].certificate !== '') completedFields++;
+                    break;
+
+                case 'occupationalSafety':
+                    totalFields += 8; // ltifr, safety programs, coverage, emergency plan, drill frequency, risk assessment, health facilities, checkup frequency, insurance, certificate
+                    if (social[section].ltifr && social[section].ltifr !== '') completedFields++;
+                    if (social[section].safetyTraining?.programs?.length > 0) completedFields++;
+                    if (social[section].safetyTraining?.coverage && social[section].safetyTraining.coverage !== '') completedFields++;
+                    if (social[section].emergencyResponse?.plan && social[section].emergencyResponse.plan !== '') completedFields++;
+                    if (social[section].emergencyResponse?.drillFrequency && social[section].emergencyResponse.drillFrequency !== '') completedFields++;
+                    if (social[section].riskAssessment && social[section].riskAssessment !== '') completedFields++;
+                    if (social[section].healthServices?.facilities && social[section].healthServices.facilities !== '') completedFields++;
+                    if (social[section].healthServices?.checkupFrequency && social[section].healthServices.checkupFrequency !== '') completedFields++;
+                    if (social[section].insurance && social[section].insurance !== '') completedFields++;
+                    if (social[section].certificate && social[section].certificate !== '') completedFields++;
+                    break;
+
+                case 'hrManagement':
+                    totalFields += 10; // humanRightsPolicy, supplierCode, fairWages, benefits, wageAudits, leadership%, board%, grievance details, cases, resolution, hours, key programs, certificate
+                    if (social[section].humanRightsPolicy && social[section].humanRightsPolicy !== '') completedFields++;
+                    if (social[section].supplierCode && social[section].supplierCode !== '') completedFields++;
+                    if (social[section].wagesBenefits?.fairWages && social[section].wagesBenefits.fairWages !== '') completedFields++;
+                    if (social[section].wagesBenefits?.benefits && social[section].wagesBenefits.benefits !== '') completedFields++;
+                    if (social[section].wagesBenefits?.wageAudits && social[section].wagesBenefits.wageAudits !== '') completedFields++;
+                    if (social[section].diversity?.leadershipPercentage && social[section].diversity.leadershipPercentage !== '') completedFields++;
+                    if (social[section].diversity?.boardPercentage && social[section].diversity.boardPercentage !== '') completedFields++;
+                    if (social[section].grievanceMechanism?.details && social[section].grievanceMechanism.details !== '') completedFields++;
+                    if (social[section].grievanceMechanism?.resolutionOutcomes && social[section].grievanceMechanism.resolutionOutcomes !== '') completedFields++;
+                    if (social[section].trainingDevelopment?.hoursPerEmployee && social[section].trainingDevelopment.hoursPerEmployee !== '') completedFields++;
+                    if (social[section].trainingDevelopment?.keyPrograms?.length > 0) completedFields++;
+                    if (social[section].certificate && social[section].certificate !== '') completedFields++;
+                    break;
+
+                case 'csrSocialResponsibilities':
+                    totalFields += 8; // community initiatives, localHiring, csrProjects, employee programs, participation, spend, outcomes measurement, reporting, feedback, certificate
+                    if (social[section].communityInvestment?.initiatives?.length > 0) completedFields++;
+                    if (social[section].communityInvestment?.localHiring && social[section].communityInvestment.localHiring !== '') completedFields++;
+                    if (social[section].csrProjects?.length > 0) completedFields++;
+                    if (social[section].employeeOutreach?.programs?.length > 0) completedFields++;
+                    if (social[section].employeeOutreach?.participation && social[section].employeeOutreach.participation !== '') completedFields++;
+                    if (social[section].employeeOutreach?.spend && social[section].employeeOutreach.spend !== '') completedFields++;
+                    if (social[section].socialOutcomes?.measurement && social[section].socialOutcomes.measurement !== '') completedFields++;
+                    if (social[section].socialOutcomes?.reporting && social[section].socialOutcomes.reporting !== '') completedFields++;
+                    if (social[section].socialOutcomes?.feedback && social[section].socialOutcomes.feedback !== '') completedFields++;
+                    if (social[section].certificate && social[section].certificate !== '') completedFields++;
+                    break;
+            }
+        }
+    });
+
+    return totalFields > 0 ? Math.round((completedFields / totalFields) * 100) : 0;
+};
+
+// Helper function to calculate quality completion percentage
+const calculateQualityCompletion = (quality) => {
+    console.log('quality', quality);
+    if (!quality) return 0;
+
+    const sections = [
+        'deliveryPerformance',
+        'qualityManagement',
+        'processControl',
+        'materialManagement',
+        'maintenanceCalibration',
+        'technologyUpgradation'
     ];
 
     let completedSections = 0;
     let totalFields = 0;
 
     sections.forEach(section => {
-        if (social[section]) {
+        if (quality[section]) {
             totalFields += 2; // value and certificate fields
-            if (social[section].value && social[section].value !== '') {
+            if (quality[section].value && quality[section].value !== '') {
                 completedSections += 1;
             }
-            if (social[section].certificate && social[section].certificate !== '') {
+            if (quality[section].certificate && quality[section].certificate !== '') {
                 completedSections += 1;
             }
         }
@@ -640,12 +753,11 @@ const calculateGovernanceCompletion = (governance) => {
     if (!governance) return 0;
 
     const sections = [
-        'deliveryPerformance',
-        'qualityManagement',
-        'processControl',
-        'materialManagement',
-        'maintenanceCalibration',
-        'technologyUpgradation'
+        'governanceStructure',
+        'policiesCompliance',
+        'reportingTargets',
+        'supplierDueDiligence',
+        'incidentsRemediation'
     ];
 
     let completedSections = 0;
@@ -707,6 +819,21 @@ const getRecentUpdates = (esgData) => {
                     date: formatTimeAgo(value.lastUpdated, now),
                     status: value.points > 0 ? 'Reviewed' : 'Completed',
                     type: 'social'
+                });
+            }
+        });
+    }
+
+    // Check for quality updates
+    if (esgData.quality) {
+        Object.entries(esgData.quality).forEach(([key, value]) => {
+            if (value && value.lastUpdated) {
+                updates.push({
+                    id: `qual-${key}`,
+                    title: `Quality ${key.replace(/([A-Z])/g, ' $1').toLowerCase()} updated`,
+                    date: formatTimeAgo(value.lastUpdated, now),
+                    status: value.points > 0 ? 'Reviewed' : 'Completed',
+                    type: 'quality'
                 });
             }
         });
@@ -830,6 +957,7 @@ export const getDashboardData = async (req, res) => {
                     esgScores: {
                         environmental: 0,
                         social: 0,
+                        quality: 0,
                         governance: 0,
                         overall: 0
                     },
@@ -837,6 +965,7 @@ export const getDashboardData = async (req, res) => {
                         company: 0,
                         environmental: 0,
                         social: 0,
+                        quality: 0,
                         governance: 0
                     },
                     recentUpdates: [],
@@ -850,10 +979,11 @@ export const getDashboardData = async (req, res) => {
             company: calculateCompanyCompletion(esgData.companyInfo),
             environmental: calculateEnvironmentalCompletion(esgData.environment),
             social: calculateSocialCompletion(esgData.social),
+            quality: calculateQualityCompletion(esgData.quality),
             governance: calculateGovernanceCompletion(esgData.governance)
         };
 
-        // Get recent updates based on lastUpdated timestamps
+        // Get recent updates
         const recentUpdates = getRecentUpdates(esgData);
 
         res.status(200).json({
@@ -862,6 +992,7 @@ export const getDashboardData = async (req, res) => {
                 esgScores: {
                     environmental: Number((esgData.overallScore?.environment || 0).toFixed(2)),
                     social: Number((esgData.overallScore?.social || 0).toFixed(2)),
+                    quality: Number((esgData.overallScore?.quality || 0).toFixed(2)),
                     governance: Number((esgData.overallScore?.governance || 0).toFixed(2)),
                     overall: Number((esgData.overallScore?.total || 0).toFixed(2))
                 },
@@ -878,4 +1009,332 @@ export const getDashboardData = async (req, res) => {
             error: error.message
         });
     }
+};
+
+// Update ESG data
+export const updateESGData = async (req, res) => {
+    try {
+        const { supplierId } = req.params;
+        const { section, subsection, data } = req.body;
+
+        // Validate section and subsection
+        const validSections = ['environment', 'social', 'governance', 'quality'];
+        const validEnvironmentSubsections = ['renewableEnergy', 'waterConsumption', 'rainwaterHarvesting', 'emissionControl', 'resourceConservation'];
+        const validSocialSubsections = ['swachhWorkplace', 'occupationalSafety', 'hrManagement', 'csrSocialResponsibilities'];
+        const validGovernanceSubsections = ['governanceStructure', 'policiesCompliance', 'reportingTargets', 'supplierDueDiligence', 'incidentsRemediation'];
+        const validQualitySubsections = ['deliveryPerformance', 'qualityManagement', 'processControl', 'materialManagement', 'maintenanceCalibration', 'technologyUpgradation'];
+
+        if (!validSections.includes(section)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid section'
+            });
+        }
+
+        let validSubsections;
+        switch (section) {
+            case 'environment':
+                validSubsections = validEnvironmentSubsections;
+                break;
+            case 'social':
+                validSubsections = validSocialSubsections;
+                break;
+            case 'governance':
+                validSubsections = validGovernanceSubsections;
+                break;
+            case 'quality':
+                validSubsections = validQualitySubsections;
+                break;
+        }
+
+        if (!validSubsections.includes(subsection)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Invalid subsection for the given section'
+            });
+        }
+
+        // Calculate points based on section and subsection
+        let points = calculatePoints(section, subsection, data);
+
+        // Prepare update object
+        const updateQuery = {};
+
+        // Handle different data structures based on section and subsection
+        switch (section) {
+            case 'environment':
+                switch (subsection) {
+                    case 'waterConsumption':
+                        updateQuery[`${section}.${subsection}`] = {
+                            baseline: data.baseline || '',
+                            targets: data.targets || '',
+                            progress: data.progress || '',
+                            certificate: data.certificate || '',
+                            points,
+                            remarks: data.remarks || '',
+                            lastUpdated: new Date()
+                        };
+                        break;
+                    case 'rainwaterHarvesting':
+                        updateQuery[`${section}.${subsection}`] = {
+                            volume: data.volume || '',
+                            rechargeCapacity: data.rechargeCapacity || '',
+                            infrastructure: data.infrastructure || '',
+                            maintenance: data.maintenance || '',
+                            certificate: data.certificate || '',
+                            points,
+                            remarks: data.remarks || '',
+                            lastUpdated: new Date()
+                        };
+                        break;
+                    case 'emissionControl':
+                        updateQuery[`${section}.${subsection}`] = {
+                            chemicalManagement: data.chemicalManagement || '',
+                            chemicalList: Array.isArray(data.chemicalList) ? data.chemicalList : [],
+                            disposalMethods: Array.isArray(data.disposalMethods) ? data.disposalMethods : [],
+                            eiaReports: data.eiaReports || '',
+                            lcaReports: data.lcaReports || '',
+                            certificate: data.certificate || '',
+                            points,
+                            remarks: data.remarks || '',
+                            lastUpdated: new Date()
+                        };
+                        break;
+                    case 'resourceConservation':
+                        updateQuery[`${section}.${subsection}`] = {
+                            wasteDiversion: data.wasteDiversion || '',
+                            packagingMeasures: data.packagingMeasures || '',
+                            certifications: Array.isArray(data.certifications) ? data.certifications : [],
+                            certificate: data.certificate || '',
+                            points,
+                            remarks: data.remarks || '',
+                            lastUpdated: new Date()
+                        };
+                        break;
+                    case 'renewableEnergy':
+                        updateQuery[`${section}.${subsection}`] = {
+                            value: data.value || '',
+                            certificate: data.certificate || '',
+                            points,
+                            remarks: data.remarks || '',
+                            lastUpdated: new Date()
+                        };
+                        break;
+                    default:
+                        updateQuery[`${section}.${subsection}`] = {
+                            value: data.value || '',
+                            certificate: data.certificate || '',
+                            points,
+                            remarks: data.remarks || '',
+                            lastUpdated: new Date()
+                        };
+                }
+                break;
+
+            case 'social':
+                switch (subsection) {
+                    case 'occupationalSafety':
+                        updateQuery[`${section}.${subsection}`] = {
+                            ltifr: data.ltifr || '',
+                            safetyTraining: {
+                                programs: data.safetyTraining?.programs || [],
+                                coverage: data.safetyTraining?.coverage || ''
+                            },
+                            emergencyResponse: {
+                                plan: data.emergencyResponse?.plan || '',
+                                drillFrequency: data.emergencyResponse?.drillFrequency || ''
+                            },
+                            riskAssessment: data.riskAssessment || '',
+                            healthServices: {
+                                facilities: data.healthServices?.facilities || '',
+                                checkupFrequency: data.healthServices?.checkupFrequency || ''
+                            },
+                            insurance: data.insurance || '',
+                            certificate: data.certificate || '',
+                            points,
+                            remarks: data.remarks || '',
+                            lastUpdated: new Date()
+                        };
+                        break;
+                    case 'hrManagement':
+                        updateQuery[`${section}.${subsection}`] = {
+                            humanRightsPolicy: data.humanRightsPolicy || '',
+                            supplierCode: data.supplierCode || '',
+                            wagesBenefits: {
+                                fairWages: data.wagesBenefits?.fairWages || '',
+                                benefits: data.wagesBenefits?.benefits || '',
+                                wageAudits: data.wagesBenefits?.wageAudits || ''
+                            },
+                            diversity: {
+                                leadershipPercentage: data.diversity?.leadershipPercentage || '',
+                                boardPercentage: data.diversity?.boardPercentage || ''
+                            },
+                            grievanceMechanism: {
+                                details: data.grievanceMechanism?.details || '',
+                                casesRaised: data.grievanceMechanism?.casesRaised || 0,
+                                resolutionOutcomes: data.grievanceMechanism?.resolutionOutcomes || ''
+                            },
+                            trainingDevelopment: {
+                                hoursPerEmployee: data.trainingDevelopment?.hoursPerEmployee || '',
+                                keyPrograms: data.trainingDevelopment?.keyPrograms || []
+                            },
+                            certificate: data.certificate || '',
+                            points,
+                            remarks: data.remarks || '',
+                            lastUpdated: new Date()
+                        };
+                        break;
+                    case 'csrSocialResponsibilities':
+                        // Ensure csrProjects is properly formatted
+                        const csrProjects = Array.isArray(data.csrProjects)
+                            ? data.csrProjects.map(project => ({
+                                name: project.name || '',
+                                description: project.description || '',
+                                impact: project.impact || '',
+                                year: project.year || ''
+                            }))
+                            : [];
+
+                        updateQuery[`${section}.${subsection}`] = {
+                            communityInvestment: {
+                                initiatives: Array.isArray(data.communityInvestment?.initiatives)
+                                    ? data.communityInvestment.initiatives
+                                    : [],
+                                localHiring: data.communityInvestment?.localHiring || ''
+                            },
+                            csrProjects: csrProjects,
+                            employeeOutreach: {
+                                programs: Array.isArray(data.employeeOutreach?.programs)
+                                    ? data.employeeOutreach.programs
+                                    : [],
+                                participation: data.employeeOutreach?.participation || '',
+                                spend: data.employeeOutreach?.spend || ''
+                            },
+                            socialOutcomes: {
+                                measurement: data.socialOutcomes?.measurement || '',
+                                reporting: data.socialOutcomes?.reporting || '',
+                                feedback: data.socialOutcomes?.feedback || ''
+                            },
+                            certificate: data.certificate || '',
+                            points,
+                            remarks: data.remarks || '',
+                            lastUpdated: new Date()
+                        };
+                        break;
+                    default:
+                        updateQuery[`${section}.${subsection}`] = {
+                            value: data.value || '',
+                            certificate: data.certificate || '',
+                            points,
+                            remarks: data.remarks || '',
+                            lastUpdated: new Date()
+                        };
+                }
+                break;
+
+            default:
+                updateQuery[`${section}.${subsection}`] = {
+                    value: data.value || '',
+                    certificate: data.certificate || '',
+                    points,
+                    remarks: data.remarks || '',
+                    lastUpdated: new Date()
+                };
+        }
+
+        const updatedData = await ESGData.findOneAndUpdate(
+            { supplierId },
+            { $set: updateQuery },
+            { new: true, upsert: true }
+        );
+
+        // Update supplier profile form submission status
+        await SupplierProfile.findOneAndUpdate(
+            { supplierId },
+            { [`formSubmissions.${section}.submitted`]: true }
+        );
+
+        res.status(200).json({
+            success: true,
+            message: 'ESG data updated successfully',
+            data: updatedData
+        });
+    } catch (error) {
+        console.error('Error updating ESG data:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server error while updating ESG data'
+        });
+    }
+};
+
+// Helper function to calculate points
+const calculatePoints = (section, subsection, data) => {
+    let points = 0;
+
+    // Basic points for providing information
+    if (data) {
+        points = 10;
+
+        // Additional points for providing certificates
+        if (data.certificate) {
+            points += 5;
+        }
+
+        // Section-specific scoring logic
+        switch (section) {
+            case 'environment':
+                switch (subsection) {
+                    case 'renewableEnergy':
+                        const renewablePercentage = parseFloat(data.value);
+                        if (!isNaN(renewablePercentage)) {
+                            points += Math.min(renewablePercentage / 10, 15);
+                        }
+                        break;
+                    case 'waterConsumption':
+                        if (data.targets && data.progress) {
+                            points += 10;
+                        }
+                        break;
+                    case 'rainwaterHarvesting':
+                        if (data.volume && data.infrastructure) {
+                            points += 10;
+                        }
+                        break;
+                    case 'emissionControl':
+                        if (data.chemicalManagement && data.disposalMethods?.length > 0) {
+                            points += 10;
+                        }
+                        break;
+                    case 'resourceConservation':
+                        if (data.wasteDiversion && data.certifications?.length > 0) {
+                            points += 10;
+                        }
+                        break;
+                }
+                break;
+
+            case 'social':
+                switch (subsection) {
+                    case 'occupationalSafety':
+                        if (data.ltifr && data.safetyTraining?.programs?.length > 0) {
+                            points += 10;
+                        }
+                        break;
+                    case 'hrManagement':
+                        if (data.humanRightsPolicy && data.diversity?.leadershipPercentage) {
+                            points += 10;
+                        }
+                        break;
+                    case 'csrSocialResponsibilities':
+                        if (data.csrProjects?.length > 0 && data.communityInvestment?.initiatives?.length > 0) {
+                            points += 10;
+                        }
+                        break;
+                }
+                break;
+        }
+    }
+
+    return points;
 }; 

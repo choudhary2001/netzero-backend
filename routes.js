@@ -14,6 +14,7 @@ import {
     changePassword
 } from './Controllers/user.js';
 import User from './Models/user.js';
+import SupplierProfile from './Models/SupplierProfile.js';
 import { verifyToken, isAdmin, isCompany, isSupplier } from './middlewares/auth.js';
 import { fetchRole } from './middlewares/fetchRole.js';
 import {

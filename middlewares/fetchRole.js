@@ -1,6 +1,6 @@
 import User from "../Models/user.js";
 
- export const fetchRole = async (req, res) => {
+export const fetchRole = async (req, res) => {
   console.log("The fetch role function is called ");
   try {
     const user = await User.findById(req.user.id);

@@ -1,6 +1,6 @@
 import User from '../Models/user.js';
-import SupplierProfile from '../Models/supplierProfile.js';
 import ESGData from '../Models/ESGData.js';
+import SupplierProfile from '../Models/SupplierProfile.js';
 import Chat from '../Models/Chat.js';
 import mongoose from 'mongoose';
 
@@ -106,8 +106,8 @@ const getCategoryDistribution = async () => {
         'social.swachhWorkplace.value': { $ne: null }
     });
 
-    const governance = await ESGData.countDocuments({
-        'governance.deliveryPerformance.value': { $ne: null }
+    const quality = await ESGData.countDocuments({
+        'quality.deliveryPerformance.value': { $ne: null }
     });
 
     const companyInfo = await ESGData.countDocuments({
@@ -117,7 +117,7 @@ const getCategoryDistribution = async () => {
     return [
         { name: 'Environment', value: environment },
         { name: 'Social', value: social },
-        { name: 'Governance', value: governance },
+        { name: 'Quality', value: quality },
         { name: 'Company Info', value: companyInfo }
     ];
 };
@@ -182,7 +182,7 @@ export const getAllUsers = async (req, res) => {
     try {
         const users = await User.find({})
             .select('-password -__v')
-            .sort({ createdAt: -1 });
+            .sort({ date: -1 });
 
         res.status(200).json({
             success: true,

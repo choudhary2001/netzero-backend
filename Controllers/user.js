@@ -4,7 +4,8 @@ import bcrypt from 'bcryptjs';
 import OTP from '../Models/otp.js';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import SupplierProfile from '../Models/supplierProfile.js';
+import SupplierProfile from '../Models/SupplierProfile.js';
+import ESGData from '../Models/ESGData.js';
 
 //this function is for login the user
 export const login = async (req, res) => {
@@ -94,7 +95,7 @@ export const getCurrentUser = async (req, res) => {
 
 //this is the function that sends the otp on registration of the user
 export const register = async (req, res) => {
-  const { email, password, role } = req.body;
+  const { name, email, password, role, companyName } = req.body;
   try {
     // Check if user already exists
     await OTP.deleteOne({ email });
@@ -135,23 +136,65 @@ export const register = async (req, res) => {
       }
     });
 
-    // Create new user
-    /*user = new User({
-        email,
-        password,
-        role
-    });*/
-
     // Hash password
-    //const salt = await bcrypt.genSalt(10);
-    //user.password = await bcrypt.hash(password, salt);
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Save user to database
-    //await user.save();
-    res.status(200).json({ msg: 'OTP sent successfully' });
+    // Create user
+    user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      companyName
+    });
+
+    // If user is a supplier, create supplier profile and ESG data
+    if (role === 'supplier') {
+      await SupplierProfile.create({
+        supplierId: user._id,
+        companyName,
+        formSubmissions: {
+          environment: { submitted: false },
+          social: { submitted: false },
+          governance: { submitted: false },
+          quality: { submitted: false }
+        }
+      });
+
+      await ESGData.create({
+        supplierId: user._id,
+        status: 'draft'
+      });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'User registered successfully',
+      data: {
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          companyName: user.companyName
+        },
+        token
+      }
+    });
   } catch (err) {
-    console.error(err.message);
-    res.status(500).send('Server error');
+    console.error('Error registering user:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while registering user'
+    });
   }
 };
 
@@ -366,9 +409,11 @@ export const updateProfile = async (req, res) => {
             }
           });
 
-          // Calculate overall score from the three main categories
-          const { environmental, social, governance } = supplierProfile.esgScores;
-          supplierProfile.esgScores.overall = Math.round((environmental + social + governance) / 3);
+          // Calculate overall score from all four categories
+          const { environmental, social, quality, governance } = supplierProfile.esgScores;
+          supplierProfile.esgScores.overall = Math.round(
+            (environmental + social + quality + governance) / 4
+          );
         }
 
         // Handle form submission updates
@@ -521,6 +566,116 @@ export const changePassword = async (req, res) => {
       message: "Server error while changing password"
     });
   }
+};
+
+// Get user profile
+export const getUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const user = await User.findById(userId).select('-password');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Get additional data based on role
+    let additionalData = {};
+    if (user.role === 'supplier') {
+      const [profile, esgData] = await Promise.all([
+        SupplierProfile.findOne({ supplierId: userId }),
+        ESGData.findOne({ supplierId: userId })
+      ]);
+
+      additionalData = {
+        profile,
+        esgData: esgData ? {
+          status: esgData.status,
+          overallScore: esgData.overallScore,
+          completionStatus: {
+            environment: calculateSectionCompletion(esgData.environment),
+            social: calculateSectionCompletion(esgData.social),
+            governance: calculateSectionCompletion(esgData.governance),
+            quality: calculateSectionCompletion(esgData.quality)
+          }
+        } : null
+      };
+    }
+
+    res.status(200).json({
+      success: true,
+      data: {
+        user,
+        ...additionalData
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching user profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching user profile'
+    });
+  }
+};
+
+// Update user profile
+export const updateUserProfile = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const updateData = req.body;
+
+    // Don't allow role or password updates through this endpoint
+    delete updateData.role;
+    delete updateData.password;
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: updateData },
+      { new: true }
+    ).select('-password');
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Profile updated successfully',
+      data: updatedUser
+    });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while updating user profile'
+    });
+  }
+};
+
+// Helper function to calculate section completion
+const calculateSectionCompletion = (sectionData) => {
+  if (!sectionData) return 0;
+
+  const subsections = Object.keys(sectionData);
+  if (subsections.length === 0) return 0;
+
+  const completedSubsections = subsections.filter(subsection => {
+    const data = sectionData[subsection];
+    return data && (
+      (data.value !== undefined && data.value !== '') ||
+      (data.baseline !== undefined && data.baseline !== '') ||
+      (data.chemicalManagement !== undefined && data.chemicalManagement !== '') ||
+      (data.ltifr !== undefined && data.ltifr !== '') ||
+      (data.humanRightsPolicy !== undefined && data.humanRightsPolicy !== '')
+    );
+  });
+
+  return (completedSubsections.length / subsections.length) * 100;
 };
 
 
