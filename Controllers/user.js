@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs';
 import OTP from '../Models/otp.js';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import SupplierProfile from '../Models/SupplierProfile.js';
+import SupplierProfile from '../Models/supplierProfile.js';
 import ESGData from '../Models/ESGData.js';
 
 //this function is for login the user

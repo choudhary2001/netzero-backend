@@ -2,7 +2,7 @@ import ESGData from '../Models/ESGData.js';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
-import SupplierProfile from '../Models/SupplierProfile.js';
+import SupplierProfile from '../Models/supplierProfile.js';
 
 // Storage configuration for multer
 const storage = multer.diskStorage({

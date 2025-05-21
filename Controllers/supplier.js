@@ -1,5 +1,5 @@
 import ESGData from '../Models/ESGData.js';
-import SupplierProfile from '../Models/SupplierProfile.js';
+import SupplierProfile from '../Models/supplierProfile.js';
 import User from '../Models/user.js';
 
 // Get all suppliers
