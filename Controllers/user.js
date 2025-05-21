@@ -99,6 +99,8 @@ export const register = async (req, res) => {
   try {
     // Check if user already exists
     await OTP.deleteOne({ email });
+    await OTP.deleteOne({ email: email });
+
     let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ msg: 'User already exists' });
@@ -141,53 +143,43 @@ export const register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     // Create user
-    user = await User.create({
-      name,
-      email,
-      password: hashedPassword,
-      role,
-      companyName
-    });
+    // user = await User.create({
+    //   name,
+    //   email,
+    //   password: hashedPassword,
+    //   role,
+    //   companyName
+    // });
 
-    // If user is a supplier, create supplier profile and ESG data
-    if (role === 'supplier') {
-      await SupplierProfile.create({
-        supplierId: user._id,
-        companyName,
-        formSubmissions: {
-          environment: { submitted: false },
-          social: { submitted: false },
-          governance: { submitted: false },
-          quality: { submitted: false }
-        }
-      });
+    // // If user is a supplier, create supplier profile and ESG data
+    // if (role === 'supplier') {
+    //   await SupplierProfile.create({
+    //     supplierId: user._id,
+    //     companyName,
+    //     formSubmissions: {
+    //       environment: { submitted: false },
+    //       social: { submitted: false },
+    //       governance: { submitted: false },
+    //       quality: { submitted: false }
+    //     }
+    //   });
 
-      await ESGData.create({
-        supplierId: user._id,
-        status: 'draft'
-      });
-    }
+    //   await ESGData.create({
+    //     supplierId: user._id,
+    //     status: 'draft'
+    //   });
+    // }
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user._id, role: user.role },
-      process.env.JWT_SECRET,
-      { expiresIn: '30d' }
-    );
+    // // Generate JWT token
+    // const token = jwt.sign(
+    //   { id: user._id, role: user.role },
+    //   process.env.JWT_SECRET,
+    //   { expiresIn: '30d' }
+    // );
 
     res.status(201).json({
       success: true,
       message: 'User registered successfully',
-      data: {
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-          companyName: user.companyName
-        },
-        token
-      }
     });
   } catch (err) {
     console.error('Error registering user:', err);
