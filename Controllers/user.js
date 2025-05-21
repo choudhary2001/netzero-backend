@@ -217,7 +217,12 @@ export const verifyOTP = async (req, res) => {
       role: data.role,
       name: data.name
     });
-    await OTP.deleteOne({ email: data.email });
+    try {
+      await OTP.deleteOne({ email: data.email });
+    }
+    catch (err) {
+      console.log("the error we have :", err);
+    }
     await user.save();
     res.status(200).json({ msg: 'User registered successfully' });
   }
