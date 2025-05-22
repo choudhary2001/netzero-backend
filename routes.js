@@ -60,6 +60,16 @@ import {
     getUnreadCount
 } from './Controllers/chatController.js';
 
+// Import contact controller
+import {
+    submitContactForm,
+    getAllContacts,
+    getContactById,
+    updateContact,
+    deleteContact,
+    getContactStats
+} from './Controllers/contactController.js';
+
 import express from 'express';
 const router = express.Router();
 
@@ -136,5 +146,15 @@ router.get('/chat/conversations/:conversationId/messages', verifyToken, getMessa
 router.post('/chat/conversations/:conversationId/messages', verifyToken, sendMessage);
 router.put('/chat/conversations/:conversationId/read', verifyToken, markMessagesAsRead);
 router.get('/chat/unread', verifyToken, getUnreadCount);
+
+// Contact Form Routes - Public route for submissions
+router.post('/contact', submitContactForm);
+
+// Contact Form Routes - Admin only routes
+router.get('/admin/contacts', verifyToken, isAdmin, getAllContacts);
+router.get('/admin/contacts/stats', verifyToken, isAdmin, getContactStats);
+router.get('/admin/contacts/:id', verifyToken, isAdmin, getContactById);
+router.put('/admin/contacts/:id', verifyToken, isAdmin, updateContact);
+router.delete('/admin/contacts/:id', verifyToken, isAdmin, deleteContact);
 
 export default router;
