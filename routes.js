@@ -11,7 +11,8 @@ import {
     resetPassword,
     getProfile,
     updateProfile,
-    changePassword
+    changePassword,
+    submitPartnerDetails
 } from './Controllers/user.js';
 import User from './Models/user.js';
 
@@ -156,5 +157,8 @@ router.get('/admin/contacts/stats', verifyToken, isAdmin, getContactStats);
 router.get('/admin/contacts/:id', verifyToken, isAdmin, getContactById);
 router.put('/admin/contacts/:id', verifyToken, isAdmin, updateContact);
 router.delete('/admin/contacts/:id', verifyToken, isAdmin, deleteContact);
+
+
+router.post('/submit-partner', verifyToken, submitPartnerDetails);
 
 export default router;

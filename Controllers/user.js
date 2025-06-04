@@ -93,6 +93,120 @@ export const getCurrentUser = async (req, res) => {
   }
 };
 
+// Helper function to generate OTP email template
+const generateOTPEmailTemplate = (otp, type) => {
+  const isRegistration = type === 'registration';
+  const subject = isRegistration ? 'Account Verification' : 'Password Reset Request';
+  const title = isRegistration ? 'Verify Your Account' : 'Reset Your Password';
+  const message = isRegistration
+    ? 'Thank you for registering with Net Zero Journey. Please use the OTP below to verify your account.'
+    : 'You have requested to reset your password. Please use the OTP below to proceed with the password reset.';
+  const expiryMessage = 'This OTP will expire in 10 minutes.';
+
+  return {
+    subject,
+    html: `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>${subject}</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        line-height: 1.6;
+                        margin: 0;
+                        padding: 0;
+                        background-color: #f4f4f4;
+                    }
+                    .container {
+                        max-width: 600px;
+                        margin: 20px auto;
+                        background: #ffffff;
+                        border-radius: 8px;
+                        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                        overflow: hidden;
+                    }
+                    .header {
+                        background: linear-gradient(135deg, #2d8653 0%, #1a5c3a 100%);
+                        color: white;
+                        padding: 20px;
+                        text-align: center;
+                    }
+                    .logo {
+                        max-width: 150px;
+                        margin-bottom: 10px;
+                    }
+                    .content {
+                        padding: 30px;
+                        color: #333333;
+                    }
+                    .otp-container {
+                        background-color: #f8f9fa;
+                        border-radius: 6px;
+                        padding: 20px;
+                        margin: 20px 0;
+                        text-align: center;
+                    }
+                    .otp-code {
+                        font-size: 32px;
+                        font-weight: bold;
+                        letter-spacing: 5px;
+                        color: #2d8653;
+                        margin: 10px 0;
+                    }
+                    .footer {
+                        background-color: #f8f9fa;
+                        padding: 20px;
+                        text-align: center;
+                        font-size: 12px;
+                        color: #666666;
+                        border-top: 1px solid #eeeeee;
+                    }
+                    .button {
+                        display: inline-block;
+                        padding: 12px 24px;
+                        background-color: #2d8653;
+                        color: white;
+                        text-decoration: none;
+                        border-radius: 4px;
+                        margin-top: 20px;
+                    }
+                    .warning {
+                        color: #dc3545;
+                        font-size: 14px;
+                        margin-top: 10px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                    <div class="header">
+                        <img src="https://netzerojourney.org/logo.png" alt="Net Zero Journey Logo" class="logo" style="display: none; margin: 0 auto;">
+                        <h1>${title}</h1>
+                    </div>
+                    <div class="content">
+                        <p>${message}</p>
+                        <div class="otp-container">
+                            <p>Your OTP is:</p>
+                            <div class="otp-code">${otp}</div>
+                            <p class="warning">${expiryMessage}</p>
+                        </div>
+                        <p>If you didn't request this ${isRegistration ? 'verification' : 'password reset'}, please ignore this email or contact our support team if you have concerns.</p>
+                        <p>Best regards,<br>The Net Zero Journey Team</p>
+                    </div>
+                    <div class="footer">
+                        <p>This is an automated message, please do not reply to this email.</p>
+                        <p>&copy; ${new Date().getFullYear()} Net Zero Journey. All rights reserved.</p>
+                    </div>
+                </div>
+            </body>
+            </html>
+        `
+  };
+};
+
 //this is the function that sends the otp on registration of the user
 export const register = async (req, res) => {
   const { name, email, password, role, companyName } = req.body;
@@ -110,15 +224,17 @@ export const register = async (req, res) => {
       service: "Gmail",
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASSWORD,//app password generated by google account
+        pass: process.env.EMAIL_PASSWORD,
       },
     });
+
+    const { subject, html } = generateOTPEmailTemplate(otp, 'registration');
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Account Verification',
-      text: `Your OTP is ${otp}`
+      subject,
+      html
     }
 
     const newOtp = new OTP({
@@ -264,11 +380,13 @@ export const requestPasswordReset = async (req, res) => {
       },
     });
 
+    const { subject, html } = generateOTPEmailTemplate(otp, 'password-reset');
+
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Password Reset Request',
-      text: `Your OTP for password reset is ${otp}. It will expire in 10 minutes.`
+      subject,
+      html
     };
 
     await transporter.sendMail(mailOptions);
@@ -674,6 +792,206 @@ const calculateSectionCompletion = (sectionData) => {
 
   return (completedSubsections.length / subsections.length) * 100;
 };
+
+const generatePartnerNotificationEmail = (partnerData) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>New Value Chain Partner Submission</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                margin: 0;
+                padding: 0;
+            }
+            .container {
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+            }
+            .header {
+                background: linear-gradient(135deg, #10B981 0%, #047857 100%);
+                color: white;
+                padding: 30px;
+                text-align: center;
+                border-radius: 8px 8px 0 0;
+            }
+            .content {
+                background: #ffffff;
+                padding: 30px;
+                border: 1px solid #e5e7eb;
+                border-radius: 0 0 8px 8px;
+            }
+            .partner-info {
+                background: #f9fafb;
+                border-radius: 6px;
+                padding: 20px;
+                margin: 20px 0;
+            }
+            .info-row {
+                margin-bottom: 15px;
+                border-bottom: 1px solid #e5e7eb;
+                padding-bottom: 15px;
+            }
+            .info-row:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+            .label {
+                font-weight: 600;
+                color: #4b5563;
+                margin-bottom: 5px;
+            }
+            .value {
+                color: #1f2937;
+            }
+            .footer {
+                text-align: center;
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #e5e7eb;
+                color: #6b7280;
+                font-size: 14px;
+            }
+            .logo {
+                max-width: 150px;
+                margin-bottom: 20px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <img src="https://netzerojourney.org/logo.png" alt="Net Zero Journey Logo" class="logo">
+                <h1>New Value Chain Partner Submission</h1>
+                <p>A new partner has submitted their details for ESG improvement</p>
+            </div>
+            <div class="content">
+                <p>Hello Net Zero Journey Team,</p>
+                <p>A new value chain partner has submitted their details through the ESG improvement form. Please review the following information:</p>
+                
+                <div class="partner-info">
+                    <div class="info-row">
+                        <div class="label">Company Name</div>
+                        <div class="value">${partnerData.companyName}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">Contact Person</div>
+                        <div class="value">${partnerData.contactName}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">Email Address</div>
+                        <div class="value">${partnerData.email}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">Phone Number</div>
+                        <div class="value">${partnerData.phone}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="label">Company Address</div>
+                        <div class="value">${partnerData.address}</div>
+                    </div>
+                    ${partnerData.industry ? `
+                    <div class="info-row">
+                        <div class="label">Industry</div>
+                        <div class="value">${partnerData.industry}</div>
+                    </div>
+                    ` : ''}
+                    ${partnerData.website ? `
+                    <div class="info-row">
+                        <div class="label">Website</div>
+                        <div class="value">${partnerData.website}</div>
+                    </div>
+                    ` : ''}
+                </div>
+
+                <p>Please review this submission and take appropriate action to onboard this partner into our ESG improvement program.</p>
+                
+                <div class="footer">
+                    <p>This is an automated message from Net Zero Journey's ESG Improvement System.</p>
+                    <p>© ${new Date().getFullYear()} Net Zero Journey. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+};
+
+// Add new API endpoint for partner submission
+export const submitPartnerDetails = async (req, res) => {
+  try {
+    const {
+      email,
+      companyName,
+      contactName,
+      phone,
+      address,
+      industry,
+      website
+    } = req.body;
+
+    // Validate required fields
+    if (!email || !companyName || !contactName || !phone || !address) {
+      return res.status(400).json({
+        success: false,
+        message: 'Missing required fields'
+      });
+    }
+
+    // Create partner data object
+    const partnerData = {
+      email,
+      companyName,
+      contactName,
+      phone,
+      address,
+      industry,
+      website,
+      submittedAt: new Date()
+    };
+    const transporter = nodemailer.createTransport({
+      service: "Gmail",
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASSWORD,
+      },
+    });
+
+    // Send notification email
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: 'info@netzerojourney.org',
+      subject: `New Value Chain Partner: ${companyName}`,
+      html: generatePartnerNotificationEmail(partnerData)
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    // TODO: Save partner data to database if needed
+    // await Partner.create(partnerData);
+
+    res.status(200).json({
+      success: true,
+      message: 'Partner details submitted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error submitting partner details:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error submitting partner details'
+    });
+  }
+};
+
+
 
 
 
