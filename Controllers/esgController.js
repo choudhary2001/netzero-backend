@@ -103,11 +103,7 @@ export const createOrUpdateESGData = async (req, res) => {
 
         // Extract user ID from the JWT payload
         const userId = req.user.id;
-
-        // For companyId: if using a supplier's profile, we might not have a direct companyId in the token
-        // For simplicity in this implementation, we'll use the userId as the companyId for now
         const companyId = req.user.companyId || userId;
-
         const { category, section, data } = req.body;
 
         // Required fields validation
@@ -122,6 +118,18 @@ export const createOrUpdateESGData = async (req, res) => {
 
         // Find existing ESG data
         let esgData = await ESGData.findOne({ userId, companyId });
+
+        // Special handling for emissionControl section to ensure scopeEmissions is properly structured
+        if (category === 'environment' && section === 'emissionControl') {
+            const scopeEmissions = {
+                scope1: data.scopeEmissions?.scope1 || '',
+                scope2: data.scopeEmissions?.scope2 || '',
+                scope3: data.scopeEmissions?.scope3 || ''
+            };
+
+            // Merge the scope emissions data with the rest of the data
+            data.scopeEmissions = scopeEmissions;
+        }
 
         if (!esgData) {
             // Create new ESG data if it doesn't exist
@@ -142,11 +150,25 @@ export const createOrUpdateESGData = async (req, res) => {
                 esgData[category] = {};
             }
 
-            esgData[category][section] = {
-                ...esgData[category][section],
-                ...data,
-                lastUpdated: new Date()
-            };
+            // For emissionControl, ensure we preserve the scopeEmissions structure
+            if (category === 'environment' && section === 'emissionControl') {
+                const existingData = esgData[category][section] || {};
+                esgData[category][section] = {
+                    ...existingData,
+                    ...data,
+                    scopeEmissions: {
+                        ...existingData.scopeEmissions,
+                        ...data.scopeEmissions
+                    },
+                    lastUpdated: new Date()
+                };
+            } else {
+                esgData[category][section] = {
+                    ...esgData[category][section],
+                    ...data,
+                    lastUpdated: new Date()
+                };
+            }
         }
 
         await esgData.save();
@@ -619,12 +641,16 @@ const calculateEnvironmentalCompletion = (environment) => {
                     break;
 
                 case 'emissionControl':
-                    totalFields += 6; // chemicalManagement, chemicalList, disposalMethods, eiaReports, lcaReports, certificate
+                    totalFields += 9; // chemicalManagement, chemicalList, disposalMethods, eiaReports, lcaReports, scope1, scope2, scope3, certificate
                     if (environment[section].chemicalManagement && environment[section].chemicalManagement !== '') completedFields++;
                     if (Array.isArray(environment[section].chemicalList) && environment[section].chemicalList.length > 0) completedFields++;
                     if (Array.isArray(environment[section].disposalMethods) && environment[section].disposalMethods.length > 0) completedFields++;
                     if (environment[section].eiaReports && environment[section].eiaReports !== '') completedFields++;
                     if (environment[section].lcaReports && environment[section].lcaReports !== '') completedFields++;
+                    // Add scope emissions fields
+                    if (environment[section].scopeEmissions?.scope1 && environment[section].scopeEmissions.scope1 !== '') completedFields++;
+                    if (environment[section].scopeEmissions?.scope2 && environment[section].scopeEmissions.scope2 !== '') completedFields++;
+                    if (environment[section].scopeEmissions?.scope3 && environment[section].scopeEmissions.scope3 !== '') completedFields++;
                     if (environment[section].certificate && environment[section].certificate !== '') completedFields++;
                     break;
 

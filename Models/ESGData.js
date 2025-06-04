@@ -74,7 +74,12 @@ const esgDataSchema = new mongoose.Schema({
             disposalMethods: [String],  // Disposal methods
             eiaReports: String,  // Environmental Impact Assessment reports
             lcaReports: String,  // Life Cycle Assessment reports
-            certificate: String,  // chemical inventories, EIA/LCA reports
+            scopeEmissions: {
+                scope1: { type: String, default: '' },  // Direct emissions
+                scope2: { type: String, default: '' },  // Indirect emissions from purchased energy
+                scope3: { type: String, default: '' }   // Other indirect emissions
+            },
+            certificate: String,  // chemical inventories, EIA/LCA reports, emissions data
             points: { type: Number, default: 0 },
             remarks: String,
             lastUpdated: { type: Date, default: Date.now }
